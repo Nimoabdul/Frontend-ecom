@@ -23,7 +23,7 @@ const ProductCatalog = () => {
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="product-image" // Apply some styling to the images
+                  className="product-image" 
                 />
                 <div className="card-body p-3">
                   <h5 className="card-title">{product.name}</h5>
