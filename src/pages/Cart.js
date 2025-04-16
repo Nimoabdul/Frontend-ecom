@@ -1,157 +1,208 @@
-// Cart.jsx
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import { CartContext } from '../CartContext';
+import './Cart.css';
 
 const Cart = () => {
-  // Sample cart items data
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      imageUrl: 'https://image.uniqlo.com/UQ/ST3/us/imagesgoods/477054/item/usgoods_36_477054_3x4.jpg?width=600',
-      name: 'Womens Cotton T-shirt',
-      price: 19.99,
-      quantity: 1,
-      size: 'Medium'
-    },
-    {
-      id: 2,
-      imageUrl: 'https://image.uniqlo.com/UQ/ST3/us/imagesgoods/464832/item/usgoods_65_464832_3x4.jpg?width=600',
-      name: 'Slim Fit Jeans',
-      price: 59.99,
-      quantity: 1,
-      size: '32'
+  const { cartItems, updateQuantity, removeItem, clearCart } = useContext(CartContext);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState({
+    cardNumber: '',
+    expiry: '',
+    cvv: '',
+    name: ''
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const calculateTotal = () => 
+    cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  const handlePaymentChange = (e) => {
+    const { name, value } = e.target;
+    setPaymentInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCheckout = () => {
+    setShowPayment(true);
+  };
+
+  const processPayment = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Here you would typically call your payment API
+      console.log('Processing payment with:', paymentInfo);
+      console.log('Cart items:', cartItems);
+      
+      // Clear cart on successful payment
+      clearCart();
+      alert('Payment successful! Thank you for your purchase.');
+      setShowPayment(false);
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
-  ]);
-
-  // Calculate total price
-  const calculateTotal = () => {
-    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
-  // Handle quantity updates
-  const updateQuantity = (id, newQuantity) => {
-    setItems(items.map(item =>
-      item.id === id ? { ...item, quantity: Math.max(1, newQuantity) } : item
-    ));
-  };
-
-  // Handle size updates
-  const updateSize = (id, newSize) => {
-    setItems(items.map(item =>
-      item.id === id ? { ...item, size: newSize } : item
-    ));
   };
 
   return (
-    <section className="cart-page container mt-4 mb-5">
-      {/* Cart Header */}
-      <div className="row mb-4">
-        <div className="col">
-          <h1 className="page-title">Shopping Bag</h1>
-          <p className="items-count">{items.length} items</p>
-        </div>
-      </div>
-
-      {/* Cart Items Grid */}
+    <div className="cart-container container my-5">
       <div className="row">
-        {/* Products Column */}
-        <div className="col-lg-8 mb-4 mb-lg-0">
-          {items.map(item => (
-            <div key={item.id} className="cart-item card mb-3">
-              <div className="card-body row align-items-center">
-                {/* Product Image */}
-                <div className="col-md-3">
-                  <img src={item.imageUrl} alt={item.name} className="product-image" />
+        {/* Left: Products */}
+        <div className="col-lg-8">
+          {cartItems.map((item) => (
+            <div key={`${item.id}-${item.size}-${item.color}`} className="cart-item d-flex mb-4">
+              <img src={item.imageUrl} alt={item.name} className="cart-img" />
+              <div className="ms-3 flex-grow-1">
+                <h5 className="mb-1">{item.name}</h5>
+                <p className="mb-1">
+                  <strong>Color:</strong> {item.color} | <strong>Size:</strong> {item.size}
+                </p>
+                <p className="price">${item.price.toFixed(2)}</p>
+                <div className="quantity-controls d-flex align-items-center mb-2">
+                  <button
+                    className="btn btn-outline-dark btn-sm me-2"
+                    onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity - 1)}
+                  >
+                    -
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button
+                    className="btn btn-outline-dark btn-sm ms-2"
+                    onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity + 1)}
+                  >
+                    +
+                  </button>
                 </div>
-                
-                {/* Product Details */}
-                <div className="col-md-9">
-                  {/* Product Info */}
-                  <div className="row">
-                    <div className="col-md-6">
-                      <h5 className="product-name">{item.name}</h5>
-                      <p className="price">${item.price.toFixed(2)}</p>
-                    </div>
-                    
-                    {/* Size Selection */}
-                    <div className="col-md-6 text-end">
-                      <select 
-                        value={item.size}
-                        onChange={(e) => updateSize(item.id, e.target.value)}
-                        className="size-select form-select"
-                      >
-                        <option>Small</option>
-                        <option>Medium</option>
-                        <option>Large</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Quantity Controls */}
-                  <div className="row mt-3">
-                    <div className="col-md-6 offset-md-6 d-flex justify-content-end align-items-center">
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="quantity-btn"
-                      >
-                        -
-                      </button>
-                      
-                      <input
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={item.quantity}
-                        onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
-                        className="quantity-input mx-2"
-                      />
-                      
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="quantity-btn"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <button
+                  className="btn btn-link text-danger p-0"
+                  onClick={() => removeItem(item.id, item.size, item.color)}
+                >
+                  Remove
+                </button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Summary Panel */}
+        {/* Right: Summary */}
         <div className="col-lg-4">
-          <div className="summary-panel card">
-            <div className="card-body">
-              <h3>Summary</h3>
-              
-              {/* Price Breakdown */}
-              <div className="price-breakdown mt-3">
-                <div className="price-row">
-                  <span>Subtotal:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
-                </div>
-                
-                <div className="price-row">
-                  <span>Tax (8%):</span>
-                  <span>${(calculateTotal() * 0.08).toFixed(2)}</span>
-                </div>
-                
-                <div className="price-row total">
-                  <span>Total:</span>
-                  <span>${(calculateTotal() * 1.08).toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Checkout Button */}
-              <button className="checkout-btn btn btn-primary w-100 mt-4">
-                Proceed to Checkout
-              </button>
+          <div className="summary-box p-4 border rounded bg-light">
+            <h5 className="mb-4">Order summary</h5>
+            <div className="d-flex justify-content-between mb-2">
+              <span>Item(s) subtotal</span>
+              <span>${calculateTotal().toFixed(2)}</span>
             </div>
+            <div className="d-flex justify-content-between mb-2">
+              <span>Shipping</span>
+              <span>TBD</span>
+            </div>
+            <div className="d-flex justify-content-between mb-2">
+              <span>Estimated tax</span>
+              <span>TBD</span>
+            </div>
+            <hr />
+            <div className="d-flex justify-content-between fw-bold">
+              <span>Order total</span>
+              <span>${calculateTotal().toFixed(2)}</span>
+            </div>
+            <button 
+              className="btn btn-dark w-100 mt-4"
+              onClick={handleCheckout}
+              disabled={cartItems.length === 0}
+            >
+              Proceed to Checkout
+            </button>
           </div>
         </div>
       </div>
-    </section>
+
+      {/* Payment Modal */}
+      {showPayment && (
+        <div className="modal-backdrop">
+          <div className="payment-modal">
+            <div className="modal-header">
+              <h4>Payment Information</h4>
+              <button 
+                className="close-btn"
+                onClick={() => setShowPayment(false)}
+                disabled={isProcessing}
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={processPayment}>
+              <div className="form-group">
+                <label>Card Number</label>
+                <input
+                  type="text"
+                  name="cardNumber"
+                  value={paymentInfo.cardNumber}
+                  onChange={handlePaymentChange}
+                  placeholder="1234 5678 9012 3456"
+                  required
+                  pattern="[\d ]{16,19}"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Expiry Date</label>
+                  <input
+                    type="text"
+                    name="expiry"
+                    value={paymentInfo.expiry}
+                    onChange={handlePaymentChange}
+                    placeholder="MM/YY"
+                    required
+                    pattern="\d{2}/\d{2}"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>CVV</label>
+                  <input
+                    type="text"
+                    name="cvv"
+                    value={paymentInfo.cvv}
+                    onChange={handlePaymentChange}
+                    placeholder="123"
+                    required
+                    pattern="\d{3,4}"
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Name on Card</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={paymentInfo.name}
+                  onChange={handlePaymentChange}
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+              <div className="order-summary">
+                <h5>Order Total: ${calculateTotal().toFixed(2)}</h5>
+              </div>
+              <button 
+                type="submit" 
+                className="btn btn-dark w-100"
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Processing...' : 'Confirm Payment'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

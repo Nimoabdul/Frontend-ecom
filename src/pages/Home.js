@@ -1,8 +1,8 @@
 import React from "react";
-import { Link } from "react-scroll";
+import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import homeImage from "../pages/homeimage.jpg";
-
+import "./Home.css"; 
 const Home = () => {
   return (
     <div>

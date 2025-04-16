@@ -1,71 +1,94 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import "../components/Header.css";
+import { FiShoppingCart } from "react-icons/fi";
 
 const Header = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false); // just for demo purposes
+  const [username, setUsername] = useState(null);
+  const [role, setRole] = useState(null); // ✅ role tracking
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const handleSignOut = () => {
-    setIsSignedIn(false);
-    // In real app, you'd also clear auth tokens etc.
+  const isHome = location.pathname === "/";
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("username");
+    const storedRole = localStorage.getItem("role"); // ✅ check role
+    if (storedUser) {
+      setUsername(storedUser);
+    }
+    if (storedRole) {
+      setRole(storedRole);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("role"); // clear role too
+    setUsername(null);
+    setRole(null);
+    navigate("/SignIn");
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm("");
+    }
   };
 
   return (
-    <header className="header-container">
-      <nav className="navbar container">
+    <header className={`header ${isHome ? "transparent" : ""}`}>
+      <div className="nav-container">
         <div className="logo">
-          <Link to="/" className="logo-link">DNAS</Link>
+          <Link to="/">DNAS</Link>
         </div>
 
-        <div className="nav-links">
-          <ul className="desktop-nav">
-            <li><Link to="/" className="nav-link">HOME</Link></li>
-            <li><Link to="/products" className="nav-link">PRODUCTS</Link></li>
-            <li><Link to="/cart" className="nav-link">CART</Link></li>
-          </ul>
-        </div>
+        <nav className={`nav-links ${isMenuOpen ? "active" : ""}`}>
+          <Link to="/products">View All</Link>
+          <Link to="/category/tops">Tops</Link>
+          <Link to="/category/bottoms">Bottoms</Link>
+          <Link to="/category/shoes">Shoes</Link>
 
-        <div className="right-section">
-          <div className="search-bar">
-            <input type="text" placeholder="Search products..." className="search-input" />
-          </div>
+          {/* ✅ Admin Link */}
+          {role === "admin" && (
+            <Link to="/admin" className="admin-link">
+              Admin
+            </Link>
+          )}
 
-          <div className="cart-icon">
-            <Link to="/cart" className="nav-link">🛒</Link>
-          </div>
+          <Link to="/cart" aria-label="Cart">
+            <FiShoppingCart size={22} />
+          </Link>
 
-          <div className="auth-buttons">
-            {isSignedIn ? (
-              <Link to="/signout" onClick={handleSignOut} className="nav-link">Sign Out</Link>
+          <form className="nav-search" onSubmit={handleSearch}>
+            <input
+              type="text"
+              placeholder="Search..."
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </form>
+
+          <div className="auth-links">
+            {username ? (
+              <>
+                <span className="welcome-msg">Welcome, {username}!</span>
+                <button onClick={handleLogout} className="auth-btn">Logout</button>
+              </>
             ) : (
-              <Link to="/signin" className="nav-link">Sign In</Link>
+              <Link to="/SignIn" className="auth-btn">Login</Link>
             )}
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      {/* Mobile Navigation */}
-      <div className={`mobile-nav ${isMenuOpen ? 'open' : ''}`}>
-        <button 
-          className="menu-toggle"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-expanded={isMenuOpen}
-        >
-          ☰ Menu
-        </button>
-        <div className="mobile-menu-items">
-          <ul>
-            <li><Link to="/" className="nav-link">HOME</Link></li>
-            <li><Link to="/products" className="nav-link">PRODUCTS</Link></li>
-            <li><Link to="/cart" className="nav-link">CART</Link></li>
-            <li>
-              {isSignedIn ? (
-                <Link to="/signout" onClick={handleSignOut} className="nav-link">Sign Out</Link>
-              ) : (
-                <Link to="/signin" className="nav-link">Sign In</Link>
-              )}
-            </li>
-          </ul>
+        <div className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          ☰
         </div>
       </div>
     </header>
